@@ -13,7 +13,7 @@ CREATE TABLE users (
 
 -- Create the blogs table
 CREATE TABLE blogs (
-    blog_id INT PRIMARY KEY,
+    blog_id SERIAL PRIMARY KEY,
     creator_name VARCHAR(100) NOT NULL,
     creator_user_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,

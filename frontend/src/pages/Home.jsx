@@ -58,6 +58,50 @@ export default function Home() {
         }
     };
 
+    const handleLike = async (postId) => {
+        if (!user) return;
+
+        try {
+            await axios.post(
+            `http://localhost:3001/api/posts/${postId}/like`,
+            {},
+            { withCredentials: true }
+            );
+
+            // Optimistic update
+            setPosts((prevPosts) =>
+            prevPosts.map((p) =>
+                p.blog_id === postId ? { ...p, likes: (p.likes || 0) + 1 } : p
+            )
+            );
+        } catch (err) {
+            console.error(err);
+            alert("Failed to like post.");
+        }
+    };
+
+    const handleDislike = async (postId) => {
+        if (!user) return;
+
+        try {
+            await axios.post(
+            `http://localhost:3001/api/posts/${postId}/dislike`,
+            {},
+            { withCredentials: true }
+            );
+
+            // Optimistic update
+            setPosts((prevPosts) =>
+            prevPosts.map((p) =>
+                p.blog_id === postId ? { ...p, dislikes: (p.dislikes || 0) + 1 } : p
+            )
+            );
+        } catch (err) {
+            console.error(err);
+            alert("Failed to dislike post.");
+        }
+    };
+
     // Function to handle deleting a post
     const handleDelete = async (id) => {
         // Ask the user to confirm deletion
@@ -96,6 +140,10 @@ export default function Home() {
             {user ? (
             <>
                 Welcome, <strong>{user.name}</strong> |{" "}
+                <button type="button" onClick={() => navigate("/account")}>
+                    Account
+                </button>
+                |
                 <button onClick={handleSignOut}>Sign Out</button>
             </>
             ) : (
@@ -152,6 +200,42 @@ export default function Home() {
                     {new Date(post.date_created).toLocaleString()}
                 </em>
                 </p>
+
+                {/* Like / Dislike buttons + counts */}
+                <div style={{ marginTop: "12px", display: "flex", gap: "16px", alignItems: "center" }}>
+                    <button
+                    onClick={() => handleLike(post.blog_id)}
+                    disabled={!user} // disable if not logged in
+                    style={{
+                        backgroundColor: "#e0f2fe",
+                        border: "1px solid #3b82f6",
+                        color: "#1d4ed8",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        cursor: user ? "pointer" : "not-allowed",
+                    }}
+                    >
+                    👍 {post.likes || 0}
+                    </button>
+
+                    <button
+                    onClick={() => handleDislike(post.blog_id)}
+                    disabled={!user}
+                    style={{
+                        backgroundColor: "#fee2e2",
+                        border: "1px solid #ef4444",
+                        color: "#b91c1c",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        cursor: user ? "pointer" : "not-allowed",
+                    }}
+                    >
+                    👎 {post.dislikes || 0}
+                    </button>
+                </div>
+
+                <p>-</p>
+
                 {user && user.user_id === post.creator_user_id && (
                 <>
                     <button onClick={() => navigate(`/edit/${post.blog_id}`)}>
@@ -164,6 +248,7 @@ export default function Home() {
                 )}
             </li>
         ))}
+
         </ul>
         </div>
     );

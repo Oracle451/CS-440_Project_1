@@ -44,108 +44,157 @@ router.get("/:id", async (req, res) => {
 
 // Post request to create a blog post
 router.post("/", async (req, res) => {
-    // if the user is not signed in then throw an error
-    if (!req.session.user)
-    {
+    if (!req.session.user) {
         return res.status(401).json({ error: "Not signed in." });
     }
 
-    // Get the title, content, and user from the request and session info
     const { title, content } = req.body;
     const user = req.session.user;
 
-    // Insert the post into the database
+    // Safe conversion with validation
+    const creatorUserId = parseInt(user.user_id, 10);
+    if (isNaN(creatorUserId)) {
+        console.error("Invalid user_id in session (cannot convert to int):", user.user_id);
+        return res.status(500).json({ 
+            error: "Server configuration error: invalid user ID format" 
+        });
+    }
+
     try {
         await db.query(
-        "INSERT INTO blogs (creator_name, creator_user_id, title, body, date_created) VALUES ($1, $2, $3, $4, NOW())",
-        [user.name, user.user_id, title, content]
+            "INSERT INTO blogs (creator_name, creator_user_id, title, body, date_created) VALUES ($1, $2, $3, $4, NOW())",
+            [user.name, creatorUserId, title, content]
         );
-        // Send a message confirming success
         res.json({ message: "Post added." });
-    } 
-    // If there was a problem querying the database then throw an error
-    catch (err) 
-    {
+    } catch (err) {
+        console.error("Create post failed:", err.message);
+        console.error("Parameters:", [user.name, creatorUserId, title, content]);
         res.status(500).json({ error: "Error adding post." });
     }
 });
 
 // Put request to update a blog post
 router.put("/:id", async (req, res) => {
-    // If the user is not logged in then throw an error
-    if (!req.session.user)
-    {
+    if (!req.session.user) {
         return res.status(401).json({ error: "Not signed in." });
     }
 
-    // Get the post id, content, title, and user from the request and session
     const { id } = req.params;
     const { title, content } = req.body;
     const user = req.session.user;
 
-    // Try to query the database for the blog post being edited
+    const userIdAsInt = parseInt(user.user_id, 10);
+    if (isNaN(userIdAsInt)) {
+        console.error("Invalid user_id in session during edit:", user.user_id);
+        return res.status(500).json({ error: "Invalid user ID format" });
+    }
+
     try {
         const result = await db.query("SELECT * FROM blogs WHERE blog_id = $1", [id]);
         const post = result.rows[0];
 
-        // If no post was found then throw an error
-        if (!post) 
-        {
+        if (!post) {
             return res.status(404).json({ error: "Post not found." });
         }
 
-        // If the user did not create the post then throw an error
-        if (post.creator_user_id !== user.user_id)
-        {
+        // Compare both as numbers
+        if (post.creator_user_id !== userIdAsInt) {
             return res.status(403).json({ error: "Unauthorized." });
         }
 
-        // Query the database to update the blog post
         await db.query("UPDATE blogs SET title = $1, body = $2 WHERE blog_id = $3", [title, content, id]);
         res.json({ message: "Post updated." });
-
-    // If there was an error updating the post then throw an error
     } catch (err) {
+        console.error("Update post failed:", err.message);
         res.status(500).json({ error: "Error updating post." });
     }
 });
 
 // Delete request to delete a selected post
 router.delete("/:id", async (req, res) => {
-    // If the user is not logged in then throw an error
-    if (!req.session.user)
-    {
+    if (!req.session.user) {
         return res.status(401).json({ error: "Not signed in." });
     }
 
-    // Get the post id and user from the request and session
     const { id } = req.params;
     const user = req.session.user;
 
-    // Try to query the database for the selected post
+    const userIdAsInt = parseInt(user.user_id, 10);
+    if (isNaN(userIdAsInt)) {
+        console.error("Invalid user_id in session during delete:", user.user_id);
+        return res.status(500).json({ error: "Invalid user ID format" });
+    }
+
     try {
         const result = await db.query("SELECT * FROM blogs WHERE blog_id = $1", [id]);
         const post = result.rows[0];
-        // If the post does not exist then throw an error
-        if (!post) 
-        {
+
+        if (!post) {
             return res.status(404).json({ error: "Post not found." });
         }
 
-        // If the user did not create the post then throw an error
-        if (post.creator_user_id !== user.user_id)
-        {
+        if (post.creator_user_id !== userIdAsInt) {
             return res.status(403).json({ error: "Unauthorized." });
         }
 
-        // Query the database to delete the post
         await db.query("DELETE FROM blogs WHERE blog_id = $1", [id]);
         res.json({ message: "Post deleted." });
-
-    // If there was an error deleting the post then throw an error
     } catch (err) {
+        console.error("Delete post failed:", err.message);
         res.status(500).json({ error: "Error deleting post." });
     }
+});
+
+// POST /api/posts/:id/like
+router.post("/:id/like", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Not signed in." });
+  }
+
+  const { id } = req.params;
+  const userId = req.session.user.user_id;
+
+  try {
+    // Increment likes
+    const result = await db.query(
+      "UPDATE blogs SET likes = likes + 1 WHERE blog_id = $1 RETURNING likes",
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Post not found." });
+    }
+
+    res.json({ message: "Liked", likes: result.rows[0].likes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error liking post." });
+  }
+});
+
+// POST /api/posts/:id/dislike
+router.post("/:id/dislike", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Not signed in." });
+  }
+
+  const { id } = req.params;
+
+  try {
+    const result = await db.query(
+      "UPDATE blogs SET dislikes = dislikes + 1 WHERE blog_id = $1 RETURNING dislikes",
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Post not found." });
+    }
+
+    res.json({ message: "Disliked", dislikes: result.rows[0].dislikes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error disliking post." });
+  }
 });
 
 export default router;

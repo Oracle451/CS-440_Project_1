@@ -73,4 +73,82 @@ router.get("/signout", (req, res) => {
     req.session.destroy(() => res.json({ message: "Signed out" }));
 });
 
+// GET /api/account - get current user info
+router.get("/account", (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Not signed in." });
+  }
+  res.json({ user: req.session.user });
+});
+
+// PUT /api/account - update name and/or password
+router.put("/account", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Not signed in." });
+  }
+
+  const { name, password } = req.body;
+  const userId = req.session.user.user_id;
+
+  if (!name && !password) {
+    return res.status(400).json({ error: "Provide at least name or password to update." });
+  }
+
+  try {
+    let query = "UPDATE users SET ";
+    const values = [];
+    let paramIndex = 1;
+
+    if (name) {
+      query += `name = $${paramIndex}`;
+      values.push(name);
+      paramIndex++;
+    }
+    if (password) {
+      if (name) query += ", ";
+      query += `password = $${paramIndex}`;
+      values.push(password);
+      paramIndex++;
+    }
+
+    query += ` WHERE user_id = $${paramIndex}`;
+    values.push(userId);
+
+    await db.query(query, values);
+
+    // Update session
+    if (name) req.session.user.name = name;
+
+    res.json({ message: "Account updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error updating account." });
+  }
+});
+
+// DELETE /api/account - delete own account + cascade posts
+router.delete("/account", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: "Not signed in." });
+  }
+
+  const userId = req.session.user.user_id;
+
+  try {
+    // Optional: delete all posts by this user first (or rely on ON DELETE CASCADE)
+    await db.query("DELETE FROM blogs WHERE creator_user_id = $1", [userId]);
+
+    // Delete user
+    await db.query("DELETE FROM users WHERE user_id = $1", [userId]);
+
+    // Destroy session
+    req.session.destroy(() => {
+      res.json({ message: "Account deleted successfully" });
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error deleting account." });
+  }
+});
+
 export default router;

@@ -3,8 +3,8 @@ import express from "express";
 import bodyParser from "body-parser";
 import session from "express-session";
 import cors from "cors";
-import postsRouter from "./posts.js";
-import authRouter from "./auth.js";
+import postsRouter from "./routes/posts.js";
+import authRouter from "./routes/auth.js";
 
 const app = express();
 // Set the port to host the backend on

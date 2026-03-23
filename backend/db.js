@@ -1,7 +1,6 @@
-// Import pg for database access
+// db.js - Database connection (unchanged)
 import pg from "pg";
 
-// Create a new pg client for our database variable
 export const db = new pg.Client({
   user: "postgres",
   host: "localhost",
@@ -10,7 +9,6 @@ export const db = new pg.Client({
   port: 5432,
 });
 
-// Connect to the database using our new db variable
 db.connect()
   .then(() => console.log("Connected to PostgreSQL"))
   .catch((err) => console.error("DB connection error:", err));

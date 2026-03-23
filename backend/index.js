@@ -5,6 +5,8 @@ import session from "express-session";
 import cors from "cors";
 import postsRouter from "./posts.js";
 import authRouter from "./auth.js";
+import "./eventHandlers.js";
+import { addSseClient } from "./sseManager.js";
 
 const app = express();
 // Set the port to host the backend on
@@ -24,6 +26,11 @@ app.use(session({
   resave: false,
   saveUninitialized: true
 }));
+
+// Create an endpoint for the SSE connection
+app.get("/api/sse", (req, res) => {
+  addSseClient(res);
+});
 
 // Create routes for the post modifications and user management
 app.use("/api/posts", postsRouter);

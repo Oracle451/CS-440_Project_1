@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import eventBus from "../eventBus";
 
 export default function Account() {
   const [user, setUser] = useState(null);
@@ -48,6 +49,10 @@ export default function Account() {
       await axios.put("http://localhost:3001/api/account", payload, {
         withCredentials: true,
       });
+
+      // Publish the account update event with relevant details
+      eventBus.publish("account:updated", { name: form.name });
+
       setMessage("Account updated successfully!");
       setForm({ ...form, password: "", confirmPassword: "" });
       setUser((prev) => ({ ...prev, name: form.name }));
@@ -63,6 +68,10 @@ export default function Account() {
       await axios.delete("http://localhost:3001/api/account", {
         withCredentials: true,
       });
+
+      // Publish the account deletion event with relevant details
+      eventBus.publish("account:deleted");
+
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.error || "Failed to delete account.");

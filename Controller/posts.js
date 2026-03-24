@@ -1,6 +1,6 @@
 // Import express and the database from db.js
 import express from "express";
-import { db } from "./db.js";
+import { db } from "./Model/db.js";
 
 const router = express.Router();
 

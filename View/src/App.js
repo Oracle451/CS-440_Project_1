@@ -2,11 +2,11 @@
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 // Import the various jsx files
-import Home from "./pages/Home";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import EditPost from "./pages/EditPost";
-import Account from "./pages/Account";
+import Home from "./Controller/Home";
+import SignIn from "./Controller/SignIn";
+import SignUp from "./Controller/SignUp";
+import EditPost from "./Controller/EditPost";
+import Account from "./Controller/Account";
 
 // Create the app function
 function App() {

@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+const authHeaders = () => ({
+  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+});
+
 export default function Account() {
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({ name: "", password: "", confirmPassword: "" });
@@ -12,9 +16,7 @@ export default function Account() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/api/account", {
-          withCredentials: true,
-        });
+        const res = await axios.get("http://localhost:8080/api/account", authHeader());
         setUser(res.data.user);
         setForm((prev) => ({ ...prev, name: res.data.user.name }));
       } catch (err) {
@@ -45,9 +47,7 @@ export default function Account() {
     }
 
     try {
-      await axios.put("http://localhost:3001/api/account", payload, {
-        withCredentials: true,
-      });
+      await axios.put("http://localhost:8080/api/account", authHeader());
       setMessage("Account updated successfully!");
       setForm({ ...form, password: "", confirmPassword: "" });
       setUser((prev) => ({ ...prev, name: form.name }));
@@ -60,9 +60,7 @@ export default function Account() {
     if (!window.confirm("Are you sure you want to delete your account? This cannot be undone.")) return;
 
     try {
-      await axios.delete("http://localhost:3001/api/account", {
-        withCredentials: true,
-      });
+      await axios.delete("http://localhost:8080/api/account",  authHeader());
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.error || "Failed to delete account.");

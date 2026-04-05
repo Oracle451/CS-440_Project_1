@@ -17,9 +17,9 @@ export default function SignIn() {
         e.preventDefault();
         try {
             // Post request to check the users credentials
-            await axios.post("http://localhost:3001/api/signin", form, {
-                withCredentials: true,
-            });
+            await axios.post("http://localhost:8080/api/signin", form);
+            // Store the token
+            localStorage.setItem("token", res.data.token);
             // Return to root
             navigate("/");
 

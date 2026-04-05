@@ -3,6 +3,10 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 
+const authHeaders = () => ({
+  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+});
+
 // Function for the homepage
 export default function Home() {
     // Create use state variables for the posts, user, and new post variables
@@ -21,7 +25,7 @@ export default function Home() {
     const fetchData = async () => {
         try {
             // Get request to the backend
-            const res = await axios.get("http://localhost:3001/api/posts", {
+            const res = await axios.get("http://localhost:8080/api/posts", {
             withCredentials: true,
             });
             // Populate the posts and user variables
@@ -41,9 +45,9 @@ export default function Home() {
         try {
             // Send a post request to add the post to the database
             await axios.post(
-                "http://localhost:3001/api/posts",
+                "http://localhost:8080/api/posts",
                 { title: newPost.title, content: newPost.content },
-                { withCredentials: true }
+                authHeaders()
             );
 
             // Clear input fields after post creation
@@ -63,9 +67,9 @@ export default function Home() {
 
         try {
             await axios.post(
-            `http://localhost:3001/api/posts/${postId}/like`,
+            `http://localhost:8080/api/posts/${postId}/like`,
             {},
-            { withCredentials: true }
+            authHeaders()
             );
 
             // Optimistic update
@@ -85,9 +89,9 @@ export default function Home() {
 
         try {
             await axios.post(
-            `http://localhost:3001/api/posts/${postId}/dislike`,
+            `http://localhost:8080/api/posts/${postId}/dislike`,
             {},
-            { withCredentials: true }
+            authHeaders()
             );
 
             // Optimistic update
@@ -108,7 +112,7 @@ export default function Home() {
         if (!window.confirm("Delete this post?")) return;
         try {
             // Send a delete request to the backend
-            await axios.delete(`http://localhost:3001/api/posts/${id}`, {
+            await axios.delete(`http://localhost:8080/api/posts/${id}`, {
                 withCredentials: true,
             });
             // Refetch the posts list
@@ -121,11 +125,8 @@ export default function Home() {
 
     // Function to handle sign out action
     const handleSignOut = async () => {
-        // Get request to sign out the user
-        await axios.get("http://localhost:3001/api/signout", {
-            withCredentials: true,
-        });
-        // Set the user variable to null
+        await axios.get("http://localhost:8080/api/users/signout", authHeaders());
+        localStorage.removeItem("token");
         setUser(null);
     };
 

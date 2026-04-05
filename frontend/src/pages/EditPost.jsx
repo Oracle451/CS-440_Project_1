@@ -3,6 +3,10 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
+const authHeaders = () => ({
+  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+});
+
 // Create the edit post function
 export default function EditPost() {
     // Get the user id from the URL
@@ -17,7 +21,7 @@ export default function EditPost() {
     useEffect(() => {
         axios
         // Send a get request to get the post to edit
-        .get(`http://localhost:3001/api/posts/${id}`, { withCredentials: true })
+        .get(`http://localhost:8080/api/posts/${id}`, authHeaders())
         .then((res) => {
             // Save the post data to the state variable
             setPost(res.data.post);
@@ -38,9 +42,9 @@ export default function EditPost() {
         try {
             // Send a put request to update the database
             await axios.put(
-                `http://localhost:3001/api/posts/${id}`,
+                `http://localhost:8080/api/posts/${id}`,
                 { title: form.title, content: form.content },
-                { withCredentials: true }
+                authHeaders()
             );
             // Go back to the root
             navigate("/");

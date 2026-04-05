@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      JWT_SECRET: blogsecret123
+    depends_on:
+      - user-service
+      - post-service
+
+  user-service:
+    build: ./user-service
+    environment:
+      DB_HOST: users-db
+      DB_NAME: users_db
+      DB_USER: postgres
+      DB_PASSWORD: password
+      JWT_SECRET: blogsecret123
+    depends_on:
+      - users-db
+
+  post-service:
+    build: ./post-service
+    environment:
+      DB_HOST: posts-db
+      DB_NAME: posts_db
+      DB_USER: postgres
+      DB_PASSWORD: password
+    depends_on:
+      - posts-db
+
+  users-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_PASSWORD: password
+    volumes:
+      - users_data:/var/lib/postgresql/data
+
+  posts-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: posts_db
+      POSTGRES_PASSWORD: password
+    volumes:
+      - posts_data:/var/lib/postgresql/data
+
+volumes:
+  users_data:
+  posts_data:

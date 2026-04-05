@@ -3,5 +3,17 @@
     "body-parser": "^2.2.2",
     "express": "^5.2.1",
     "pg": "^8.20.0"
-  }
+  },
+  "name": "post-service",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

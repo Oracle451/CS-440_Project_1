@@ -1,90 +1,56 @@
-// Import react and axios
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
-const authHeaders = () => ({
-  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-});
-
-// Create the edit post function
 export default function EditPost() {
-    // Get the user id from the URL
-    const { id } = useParams();
-    // Create a use state variable to hold the post and form info
-    const [post, setPost] = useState(null);
-    const [form, setForm] = useState({ title: "", content: "" });
-    // useNavigate function to let us redirect the user
-    const navigate = useNavigate();
+  const { id } = useParams();
+  const [post, setPost] = useState(null);
+  const [form, setForm] = useState({ title: "", content: "" });
+  const navigate = useNavigate();
 
-    // Function to get the existing post data from the database
-    useEffect(() => {
-        axios
-        // Send a get request to get the post to edit
-        .get(`http://localhost:8080/api/posts/${id}`, authHeaders())
-        .then((res) => {
-            // Save the post data to the state variable
-            setPost(res.data.post);
-            // Fill in the form with the post content
-            setForm({
-            title: res.data.post.title,
-            content: res.data.post.body,
-            });
-        })
-        // Throw an error if one occured
-        .catch((err) => console.error(err));
-    }, [id]);
+  const authHeaders = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+  });
 
-    // Function to submit the form when the user clicks save
-    const handleSubmit = async (e) => {
-        // Stop the browser from reloading
-        e.preventDefault();
-        try {
-            // Send a put request to update the database
-            await axios.put(
-                `http://localhost:8080/api/posts/${id}`,
-                { title: form.title, content: form.content },
-                authHeaders()
-            );
-            // Go back to the root
-            navigate("/");
-        // Throw an error if one occured
-        } catch (err) {
-            console.error(err);
-            alert("Error updating post.");
-        }
-    };
+  useEffect(() => {
+    axios.get(`http://localhost:8080/api/posts/${id}`, authHeaders())
+      .then((res) => {
+        setPost(res.data.post);
+        setForm({ title: res.data.post.title, content: res.data.post.body });
+      })
+      .catch((err) => console.error(err));
+  }, [id]);
 
-    // While waiting for the, post show a loading message
-    if (!post) return <p>Loading...</p>;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`http://localhost:8080/api/posts/${id}`,
+        { title: form.title, content: form.content },
+        authHeaders()
+      );
+      navigate("/");
+    } catch (err) {
+      alert("Error updating post.");
+    }
+  };
 
-    // UI for the edit post page
-    return (
-        <div style={{ padding: "20px", maxWidth: "700px", margin: "auto" }}>
-            <h1>Modify Post</h1>
-            <h2>Currently Editing: "{post.title}"</h2>
+  if (!post) return <p>Loading...</p>;
 
-            <form onSubmit={handleSubmit}>
-                <h3>Author</h3>
-                <input type="text" value={post.creator_name} readOnly />
-                <h3>Title</h3>
-                <input
-                    type="text"
-                    name="title"
-                    required
-                    value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                />
-                
-                <h3>Content</h3>
-                <textarea
-                    name="content"
-                    required
-                    value={form.content}
-                    onChange={(e) => setForm({ ...form, content: e.target.value })}
-                />
-                <button type="submit">Save</button>
-            </form>
-        </div>
-    );
+  return (
+    <div style={{ padding: "20px", maxWidth: "700px", margin: "auto" }}>
+      <h1>Modify Post</h1>
+      <h2>Currently Editing: "{post.title}"</h2>
+      <form onSubmit={handleSubmit}>
+        <h3>Author</h3>
+        <input type="text" value={post.creator_name} readOnly />
+        <h3>Title</h3>
+        <input type="text" required value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })} />
+        <h3>Content</h3>
+        <textarea required value={form.content}
+          onChange={(e) => setForm({ ...form, content: e.target.value })} />
+        <button type="submit">Save</button>
+      </form>
+    </div>
+  );
 }

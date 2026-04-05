@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS blogs (
+  blog_id SERIAL PRIMARY KEY,
+  creator_name VARCHAR(100) NOT NULL,
+  creator_user_id VARCHAR(50) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  body TEXT NOT NULL,
+  date_created TIMESTAMP DEFAULT NOW(),
+  likes INTEGER DEFAULT 0,
+  dislikes INTEGER DEFAULT 0
+);

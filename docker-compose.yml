@@ -13,6 +13,7 @@ services:
 
   user-service:
     build: ./user-service
+    restart: on-failure
     environment:
       DB_HOST: users-db
       DB_NAME: users_db
@@ -24,6 +25,7 @@ services:
 
   post-service:
     build: ./post-service
+    restart: on-failure
     environment:
       DB_HOST: posts-db
       DB_NAME: posts_db
@@ -39,6 +41,7 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - users_data:/var/lib/postgresql/data
+      - ./user-service/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   posts-db:
     image: postgres:15-alpine
@@ -47,6 +50,7 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - posts_data:/var/lib/postgresql/data
+      - ./post-service/init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   users_data:

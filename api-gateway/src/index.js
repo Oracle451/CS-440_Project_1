@@ -8,30 +8,24 @@ const JWT_SECRET = process.env.JWT_SECRET || "secret";
 
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
-// Decode the JWT (if present) and forward user info as a plain header
-const attachUser = (req, res, next) => {
+// Decode JWT and forward user info as a header
+app.use((req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (token) {
     try {
       req.headers["x-user"] = JSON.stringify(jwt.verify(token, JWT_SECRET));
-    } catch {
-      // Invalid token — services will treat the request as unauthenticated
-    }
+    } catch {}
   }
   next();
-};
+});
 
-app.use(attachUser);
-
-// ✦ Public auth routes — no auth needed
-app.use("/api/users/signup", createProxyMiddleware({ target: "http://user-service:3001", changeOrigin: true }));
-app.use("/api/users/signin", createProxyMiddleware({ target: "http://user-service:3001", changeOrigin: true }));
-app.use("/api/users/signout", createProxyMiddleware({ target: "http://user-service:3001", changeOrigin: true }));
-
-// ✦ Protected user routes
-app.use("/api/users", createProxyMiddleware({ target: "http://user-service:3001", changeOrigin: true }));
-
-// ✦ Post routes
-app.use("/api/posts", createProxyMiddleware({ target: "http://post-service:3002", changeOrigin: true }));
+// Single proxy that routes based on the full path
+app.use(createProxyMiddleware({
+  changeOrigin: true,
+  router: (req) => {
+    if (req.path.startsWith("/api/users")) return "http://user-service:3001";
+    if (req.path.startsWith("/api/posts")) return "http://post-service:3002";
+  }
+}));
 
 app.listen(8080, () => console.log("API Gateway on port 8080"));
